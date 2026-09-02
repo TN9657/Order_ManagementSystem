@@ -32,6 +32,19 @@ API Docs: http://localhost:8000/docs
 
 ## Option 2: Local Development
 
+
+## .env
+DATABASE_URL=Your_database_string
+
+# App
+DEBUG=False
+ENVIRONMENT=development
+
+# CORS
+CORS_ORIGINS=["http://localhost:5173", "http://localhost:3000"]
+
+
+
 ### Backend Setup
 
 ```bash
@@ -257,3 +270,4 @@ curl http://localhost:8000/health
 - Check PROJECT_ARCHITECTURE.md for system design
 - Check INTERVIEW_GUIDE.md for detailed explanations
 - Check API docs at http://localhost:8000/docs
+
