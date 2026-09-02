@@ -1,0 +1,1221 @@
+ORDER MANAGEMENT DASHBOARD — COMPLETE IMPLEMENTATION PROMPT
+ROLE
+Act as a senior full-stack software engineer and system architect.
+Build a production-quality but appropriately scoped Order Management Dashboard for an Operations Team.
+The application must be:
+•	Correct
+•	Simple
+•	Maintainable
+•	Scalable
+•	Performant
+•	Easy to understand
+•	Properly tested
+•	Properly documented
+Do not build an Amazon-like customer-facing e-commerce platform. This is primarily an internal operations/order-management application.
+________________________________________
+1. CORE OBJECTIVE
+Build an internal Order Management Dashboard that allows an operations user to:
+•	View orders
+•	Search orders by customer
+•	Filter orders by status
+•	Sort orders
+•	Paginate large order datasets
+•	View customer-level order activity
+•	View customer information
+•	Create new orders
+•	View order details
+•	Update order status
+•	Cancel orders where appropriate
+•	View dashboard KPIs
+•	Handle invalid input and failures gracefully
+The system should be designed with future scalability in mind.
+Expected future scale:
+•	5M+ orders
+•	Hundreds of thousands of customers
+The application does not need to generate 5M records for this assignment.
+________________________________________
+2. IMPORTANT SCOPE DECISION
+This is an Order Management System, not a complete e-commerce platform.
+Do NOT implement:
+•	Shopping cart
+•	Customer checkout
+•	Payment gateway
+•	Online payment processing
+•	Product reviews
+•	Product ratings
+•	Coupons
+•	Shipping integrations
+•	Customer-facing storefront
+•	Complex seller marketplace
+•	Real email/SMS infrastructure
+•	Microservice deployment
+•	Kubernetes
+The assignment does not require a complete product-shopping experience.
+However, a minimal Product and Order Item model may be implemented only if useful for demonstrating realistic order creation and inventory management.
+The primary entities are:
+Customer
+Order
+________________________________________
+3. TECHNOLOGY STACK
+Frontend
+Use:
+•	React
+•	TypeScript
+•	Vite
+•	React Router
+•	TanStack Query
+•	Modern component architecture
+Recommended UI approach:
+•	Tailwind CSS 
+•	Responsive layout
+•	Reusable components
+Backend
+Use:
+•	Python
+•	FastAPI
+•	SQLAlchemy
+•	Pydantic
+Database
+Use:
+•	PostgreSQL
+Migrations
+Use:
+•	Alembic
+Testing
+Backend:
+•	pytest
+Frontend:
+•	Vitest / React Testing Library where useful
+________________________________________
+4. ARCHITECTURE
+Use a modular monolith / service-oriented architecture.
+Conceptually:
+                 React + TypeScript
+                         |
+                         | REST API
+                         v
+                  FastAPI Backend
+                         |
+          ┌──────────────┼──────────────┐
+          |              |              |
+          v              v              v
+      Customers       Orders        Dashboard
+       Module         Module          Module
+          |              |
+          └──────────────┼──────────────┘
+                         |
+                         v
+                    PostgreSQL
+The backend should be modular.
+Each major domain should have clear separation between:
+Router
+Service
+Repository
+Schema
+Model
+Do NOT create physically separate microservices.
+The goal is:
+Modular Monolith
+       ↓
+Easy to understand
+       ↓
+Easy to test
+       ↓
+Easy to maintain
+       ↓
+Can be split into microservices later if required
+Do NOT introduce:
+•	Kubernetes
+•	Kafka
+•	RabbitMQ
+•	Redis
+•	Elasticsearch
+•	GraphQL
+•	Service mesh
+•	Multiple databases
+•	CQRS
+•	Event sourcing
+unless there is a concrete requirement.
+________________________________________
+5. PROJECT STRUCTURE
+Use a structure similar to:
+order-management-dashboard/
+│
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+|    |    |  ├── Charts/ 
+│   │   ├── pages/
+│   │   │   ├── Dashboard.tsx
+│   │   │   ├── Orders.tsx
+│   │   │   ├── Customers.tsx
+│   │   │   └── CustomerDetails.tsx
+│   │   ├── layouts/
+│   │   ├── services/
+│   │   ├── hooks/
+│   │   ├── types/
+│   │   ├── utils/
+│   │   ├── routes/
+│   │   ├── api/
+│   │   └── App.tsx
+│   ├── package.json
+│   └── ...
+│
+├── backend/
+│   ├── app/
+│   │   ├── main.py
+│   │   │
+│   │   ├── core/
+│   │   │   ├── config.py
+│   │   │   ├── exceptions.py
+│   │   │   └── logging.py
+│   │   │
+│   │   ├── database/
+│   │   │   ├── session.py
+│   │   │   └── base.py
+│   │   │
+│   │   ├── customers/
+│   │   │   ├── router.py
+│   │   │   ├── service.py
+│   │   │   ├── repository.py
+│   │   │   ├── schemas.py
+│   │   │   └── models.py
+│   │   │
+│   │   ├── orders/
+│   │   │   ├── router.py
+│   │   │   ├── service.py
+│   │   │   ├── repository.py
+│   │   │   ├── schemas.py
+│   │   │   └── models.py
+│   │   │
+│   │   └── dashboard/
+│   │       ├── router.py
+│   │       ├── service.py
+│   │       └── schemas.py
+│   │
+│   ├── alembic/
+│   ├── tests/
+│   ├── seed.py
+│   ├── requirements.txt
+│   └── .env.example
+│
+├── README.md
+├── DECISIONS.md
+├── PROJECT_ARCHITECTURE.md
+├── INTERVIEW_GUIDE.md
+└── .gitignore
+Keep the structure clean. Do not create unnecessary abstractions.
+________________________________________
+6. DATABASE DESIGN
+At minimum implement:
+CUSTOMERS
+customers
+----------
+id
+name
+email
+created_at
+Optional:
+updated_at
+ORDERS
+orders
+------
+id
+customer_id
+amount
+status
+created_at
+Optional:
+updated_at
+Relationship:
+Customer
+   |
+   | 1
+   |
+   | N
+   v
+ Orders
+A customer can have many orders.
+Each order belongs to exactly one customer.
+Use a foreign key:
+orders.customer_id → customers.id
+________________________________________
+7. ORDER STATUS
+An order can have exactly one of:
+pending
+completed
+cancelled
+Use an appropriate PostgreSQL/SQLAlchemy representation.
+Do not allow arbitrary status values.
+Document valid status transitions.
+Recommended rules:
+pending → completed
+pending → cancelled
+Do not allow:
+cancelled → completed
+completed → pending
+completed → cancelled
+unless there is a clearly documented business reason.
+________________________________________
+8. MONEY HANDLING
+Order amounts represent monetary values.
+NEVER use floating-point numbers for money.
+Use:
+NUMERIC / DECIMAL
+Example:
+DECIMAL(12,2)
+Validate:
+amount > 0
+________________________________________
+9. OPTIONAL PRODUCT MODEL
+The original objective does not require products.
+Therefore, only introduce Products if they meaningfully improve the order-management workflow.
+If implemented, keep them simple:
+products
+--------
+id
+name
+description
+price
+inventory_quantity
+created_at
+updated_at
+If orders contain products, use:
+orders
+   |
+   | 1
+   |
+   | N
+   v
+order_items
+   |
+   | N
+   |
+   v
+products
+Order item:
+order_items
+-----------
+id
+order_id
+product_id
+quantity
+unit_price
+IMPORTANT:
+Store unit_price on order_items.
+Do not calculate historical order values using the current product price.
+However, do not let the Product functionality overshadow the actual Order Management assignment.
+________________________________________
+10. SEED DATA
+Provide meaningful sample data.
+At minimum:
+20+ customers
+100+ orders
+If Products are implemented:
+10+ products
+Orders should contain:
+pending
+completed
+cancelled
+Customers should have multiple orders.
+Make the data useful for demonstrating:
+•	Search
+•	Filtering
+•	Pagination
+•	Customer summaries
+•	Dashboard statistics
+•	Status changes
+________________________________________
+11. DASHBOARD
+Create:
+/dashboard
+The dashboard is for an operations team.
+Minimum KPIs:
+Total Orders
+Total Completed Order Value
+Total Customers
+Also include useful metrics such as:
+Pending Orders
+Completed Orders
+Cancelled Orders
+Average Order Value
+Example:
+┌────────────────┐ ┌────────────────┐
+│ Total Orders   │ │ Total Customers│
+│     1,250      │ │      430       │
+└────────────────┘ └────────────────┘
+
+┌────────────────┐ ┌────────────────┐
+│ Completed Value│ │ Pending Orders │
+│   ₹845,000     │ │      120       │
+└────────────────┘ └────────────────┘
+Include:
+•	Recent orders
+•	Status distribution
+•	Useful operational insights
+Keep the dashboard professional and uncluttered.
+________________________________________
+12. ORDERS SCREEN
+Create:
+/orders
+This is the primary screen.
+The operations user must be able to:
+•	View orders
+•	Search
+•	Filter
+•	Sort
+•	Paginate
+•	View details
+•	Create an order
+•	Update status
+•	Cancel an order where allowed
+Table columns:
+Order ID
+Customer
+Amount
+Status
+Created Date
+Actions
+Example:
+Order ID | Customer | Amount | Status | Created At | Actions
+---------------------------------------------------------------
+1001     | Rahul    | ₹2500  | Pending| Sep 1      | View
+1002     | Amit     | ₹5000  | Complete| Aug 31    | View
+Use visually distinct status badges.
+________________________________________
+13. ORDER SEARCH
+Search orders by:
+Customer name
+Customer email
+Example:
+Search customer: [ Rahul Sharma ]
+Search must happen on the backend/database.
+NEVER:
+Download all orders
+        ↓
+Send millions of orders to React
+        ↓
+Filter in JavaScript
+Instead:
+GET /api/orders?search=rahul
+________________________________________
+14. ORDER FILTERING
+Support:
+All
+Pending
+Completed
+Cancelled
+Example:
+GET /api/orders?status=completed
+Filtering must be performed by the backend/database.
+________________________________________
+15. ORDER SORTING
+Support:
+Newest
+Oldest
+Amount ascending
+Amount descending
+Example:
+GET /api/orders?sort_by=created_at&sort_order=desc
+Never trust arbitrary SQL column names directly from users.
+Whitelist allowed sort fields.
+________________________________________
+16. PAGINATION
+The Orders API must support server-side pagination.
+Example:
+GET /api/orders?page=1&page_size=20
+Response:
+{
+  "items": [],
+  "page": 1,
+  "page_size": 20,
+  "total": 100,
+  "total_pages": 5
+}
+The frontend must never fetch all orders simply to implement pagination.
+Design this with 5M+ orders in mind.
+For very large datasets, document the future option of cursor/keyset pagination.
+________________________________________
+17. CUSTOMER SUMMARY
+Create:
+/customers
+Display:
+Customer
+Completed Orders
+Completed Order Value
+Example:
+Customer       Completed Orders    Completed Value
+--------------------------------------------------
+Rahul Sharma         12              ₹45,000
+Amit Patel            7              ₹28,500
+Priya Shah           19              ₹82,000
+IMPORTANT:
+Only orders with:
+status = completed
+contribute to:
+Completed Orders
+Completed Order Value
+________________________________________
+18. CUSTOMER DETAILS
+Selecting a customer should open:
+/customers/:customerId
+Display:
+Customer Name
+Email
+Created Date
+
+Completed Orders
+Completed Order Value
+
+Order History
+The user must be able to inspect that customer's orders.
+________________________________________
+19. ORDER CREATION
+The application MUST include an internal Create Order workflow.
+This does NOT mean implementing an Amazon checkout.
+The operations user can directly create an order.
+Example:
+Create Order
+
+Customer
+[ Rahul Sharma ▼ ]
+
+Amount
+[ 2500.00 ]
+
+Status
+[ Pending ▼ ]
+
+[ Cancel ] [ Create Order ]
+Request:
+POST /api/orders
+Example:
+{
+  "customer_id": 15,
+  "amount": 2500.00,
+  "status": "pending"
+}
+Validate:
+•	Customer exists
+•	Amount is greater than zero
+•	Status is valid
+•	Required fields exist
+If Products/Order Items are implemented, the creation flow may additionally allow:
+Customer
+Product
+Quantity
+Amount
+Status
+But keep the workflow simple.
+________________________________________
+20. ORDER DETAILS
+Create an order details view.
+Example:
+Order #10025
+
+Customer:
+Rahul Sharma
+
+Email:
+rahul@example.com
+
+Amount:
+₹2,500
+
+Status:
+Pending
+
+Created:
+September 1, 2026
+Actions:
+Update Status
+Cancel Order
+Only show actions that are valid for the current order status.
+________________________________________
+21. ORDER STATUS MANAGEMENT
+Allow the operations user to update status.
+Example:
+Order #10025
+
+Status:
+[ Pending ▼ ]
+
+[ Update Status ]
+Supported transitions:
+Pending → Completed
+Pending → Cancelled
+After a successful update:
+Order updated successfully
+Refresh/invalidate:
+•	Orders
+•	Dashboard
+•	Customer summary
+________________________________________
+22. ORDER CANCELLATION
+Provide a cancellation action for orders that are eligible for cancellation.
+Example:
+Are you sure you want to cancel Order #10025?
+
+[Cancel Order] [Keep Order]
+Do not allow cancellation of an already completed/cancelled order if the business rules prohibit it.
+Return appropriate HTTP errors for invalid operations.
+________________________________________
+23. API DESIGN
+Use REST APIs.
+Dashboard
+GET /api/dashboard/summary
+Customers
+GET /api/customers
+GET /api/customers/{id}
+GET /api/customers/{id}/orders
+GET /api/customers/{id}/summary
+Orders
+GET /api/orders
+GET /api/orders/{id}
+POST /api/orders
+PATCH /api/orders/{id}/status
+POST /api/orders/{id}/cancel
+If Products are implemented:
+GET /api/products
+GET /api/products/{id}
+POST /api/products
+PATCH /api/products/{id}
+PATCH /api/products/{id}/inventory
+Use appropriate HTTP status codes.
+________________________________________
+24. API QUERY PARAMETERS
+Orders endpoint should support:
+page
+page_size
+search
+status
+sort_by
+sort_order
+Example:
+GET /api/orders?page=1&page_size=20&search=rahul&status=completed&sort_by=created_at&sort_order=desc
+Perform all of these operations at the database level.
+________________________________________
+25. FRONTEND DATA FETCHING
+Use TanStack Query.
+Use it for:
+•	API requests
+•	Caching
+•	Loading state
+•	Error state
+•	Refetching
+•	Query invalidation
+After order creation:
+Invalidate Orders
+Invalidate Dashboard
+Invalidate Customer Summary
+After status update:
+Invalidate Orders
+Invalidate Dashboard
+Invalidate Customer Summary
+Avoid unnecessary network requests.
+________________________________________
+26. VALIDATION
+Frontend validation:
+Required fields
+Amount > 0
+Valid customer
+Valid status
+If Products are implemented:
+Quantity > 0
+Valid product
+Sufficient inventory
+Backend validation must use Pydantic.
+NEVER rely only on frontend validation.
+Database constraints should also be used where appropriate.
+________________________________________
+27. ERROR HANDLING
+Handle realistic scenarios.
+Backend:
+400 Bad Request
+401 Unauthorized if authentication is implemented
+403 Forbidden if authorization is implemented
+404 Not Found
+409 Conflict where appropriate
+422 Validation Error
+500 Internal Server Error
+Handle:
+•	Invalid input
+•	Invalid amount
+•	Invalid status
+•	Customer not found
+•	Order not found
+•	Database failure
+•	Backend unavailable
+•	Unexpected server error
+•	Empty results
+Frontend states:
+Loading
+Success
+Empty
+Error
+Example:
+Unable to load orders.
+
+Please try again.
+Do not expose:
+•	Python stack traces
+•	SQL errors
+•	Internal implementation details
+to end users.
+________________________________________
+28. DATABASE PERFORMANCE
+Design the database for future scale.
+Expected:
+5M+ orders
+Hundreds of thousands of customers
+Use indexes appropriately.
+At minimum consider:
+orders.customer_id
+orders.status
+orders.created_at
+customers.email
+If search requirements justify it, consider appropriate indexes for customer search.
+Do not blindly index every column.
+Explain index choices in:
+DECISIONS.md
+Avoid N+1 queries.
+Use efficient joins.
+Return only required columns where practical.
+________________________________________
+29. DASHBOARD PERFORMANCE
+Dashboard metrics must be calculated by PostgreSQL.
+For example:
+COUNT(*)
+SUM(amount)
+AVG(amount)
+GROUP BY status
+Do NOT:
+Fetch millions of orders
+        ↓
+Load them into Python
+        ↓
+Calculate totals
+Instead:
+PostgreSQL
+    ↓
+Aggregation Query
+    ↓
+FastAPI
+    ↓
+React
+For future scale, document options such as:
+•	Cached metrics
+•	Materialized views
+•	Read replicas
+•	Analytics database
+•	Background aggregation
+Do not implement these unless necessary.
+________________________________________
+30. SCALABILITY
+The application must be designed so it can evolve toward:
+5M+ orders
+Hundreds of thousands of customers
+Important considerations:
+•	Server-side pagination
+•	Efficient queries
+•	Proper indexes
+•	Avoid N+1 queries
+•	Connection pooling
+•	Small API payloads
+•	Database aggregation
+•	Proper constraints
+•	Efficient React rendering
+Document future improvements:
+Cursor pagination
+Read replicas
+Table partitioning
+Caching
+Background jobs
+Materialized views
+Analytics infrastructure
+Service extraction
+Do not implement unnecessary infrastructure.
+________________________________________
+31. WEBSITE PERFORMANCE
+Pay attention to frontend performance.
+Implement where appropriate:
+•	Lazy-loaded routes
+•	Code splitting
+•	Pagination
+•	Debounced search
+•	Avoid unnecessary re-renders
+•	Query caching
+•	Efficient tables
+•	Small API responses
+•	Reusable components
+•	Avoid fetching unused data
+Do not introduce premature optimization.
+The goal is a fast and responsive application.
+________________________________________
+32. UI/UX
+Build a professional internal operations dashboard.
+Layout:
+┌──────────────────────────────────────────────┐
+│ Order Management                             │
+├────────────┬─────────────────────────────────┤
+│ Dashboard  │                                 │
+│ Orders     │       Main Content              │
+│ Customers  │                                 │
+│ Products*  │                                 │
+│            │                                 │
+└────────────┴─────────────────────────────────┘
+Products should only appear if the optional Product module is implemented.
+Use:
+•	Clean typography
+•	Consistent spacing
+•	Status badges
+•	Clear buttons
+•	Loading indicators
+•	Empty states
+•	Error states
+•	Confirmation dialogs
+•	Responsive design
+Do not make the interface unnecessarily complicated.
+________________________________________
+33. ADDITIONAL FEATURE
+Implement exactly one meaningful additional feature beyond the minimum requirements.
+Recommended feature:
+Order Status Management
+Allow operations users to:
+Pending → Completed
+Pending → Cancelled
+and provide confirmation/error handling.
+This feature directly supports the operations team's workflow.
+Do not add many unrelated features.
+________________________________________
+34. TESTING
+Use pytest for backend testing.
+Test at minimum:
+Orders
+•	Create order
+•	Create invalid order
+•	Get order
+•	Search orders
+•	Filter orders
+•	Sort orders
+•	Pagination
+•	Update status
+•	Invalid status transition
+•	Cancel order
+•	Order not found
+Customers
+•	Get customers
+•	Get customer
+•	Get customer orders
+•	Customer summary
+Dashboard
+•	Total order count
+•	Completed order value
+•	Total customer count
+•	Status counts
+Reliability
+•	404 errors
+•	Validation errors
+•	Database/API errors where practical
+If Products are implemented:
+•	Product creation
+•	Product retrieval
+•	Inventory update
+Test important business rules, not just HTTP responses.
+________________________________________
+35. 
+Services:
+postgres
+backend
+frontend
+PostgreSQL must use a persistent volume.
+Use environment variables.
+Create:
+.env.example
+Never commit secrets.
+The project should be runnable using Docker Compose with clear documentation.
+________________________________________
+36. README.md
+Create a comprehensive but concise:
+README.md
+Include:
+1.	Project overview
+2.	Features
+3.	Technology stack
+4.	Architecture
+5.	Database schema
+6.	Project structure
+7.	API endpoints
+8.	Environment variables
+9.	Docker setup
+10.	Local development
+11.	Database migrations
+12.	Seed data
+13.	Running tests
+14.	Scalability considerations
+15.	Reliability considerations
+16.	Assumptions
+17.	Design decisions
+Include exact commands needed to run the application.
+________________________________________
+37. DECISIONS.md
+Create:
+DECISIONS.md
+Keep it concise.
+Explain:
+Technology
+•	Why React?
+•	Why TypeScript?
+•	Why FastAPI?
+•	Why PostgreSQL?
+•	Why SQLAlchemy?
+Architecture
+•	Why modular monolith?
+•	Why not microservices?
+Database
+•	Why PostgreSQL?
+•	Why DECIMAL for money?
+•	Why indexes?
+•	Why foreign keys?
+API
+•	Why REST?
+•	Why server-side pagination?
+•	Why backend filtering/sorting?
+Scalability
+•	How can this support 5M+ orders?
+•	What would change at larger scale?
+Business rules
+•	Why these order status transitions?
+Trade-offs
+Explain what was intentionally NOT implemented and why.
+________________________________________
+38. PROJECT_ARCHITECTURE.md
+Create:
+PROJECT_ARCHITECTURE.md
+Document:
+Frontend
+    ↓
+REST API
+    ↓
+FastAPI
+    ↓
+Service Layer
+    ↓
+Repository Layer
+    ↓
+PostgreSQL
+Explain:
+•	Request lifecycle
+•	Module responsibilities
+•	Database relationships
+•	API structure
+•	Error handling
+•	Scalability strategy
+Include an architecture diagram using Mermaid if appropriate.
+________________________________________
+39. INTERVIEW_GUIDE.md
+Create:
+INTERVIEW_GUIDE.md
+Prepare explanations for:
+1.	Overall architecture
+2.	Why modular monolith
+3.	Request lifecycle
+4.	React architecture
+5.	FastAPI architecture
+6.	SQLAlchemy
+7.	PostgreSQL schema
+8.	Customer/order relationship
+9.	REST API
+10.	Search
+11.	Filtering
+12.	Sorting
+13.	Pagination
+14.	Database indexes
+15.	Decimal vs float
+16.	Customer summary query
+17.	Dashboard aggregation
+18.	Transactions
+19.	Error handling
+20.	Scalability
+21.	Performance
+22.	N+1 query problem
+23.	Why not microservices
+24.	How to scale to 5M+ orders
+25.	How the architecture could evolve
+Also include realistic interview questions and concise model answers.
+________________________________________________________________________________
+40. SECURITY
+Even though this is an internal dashboard, follow basic security practices.
+•	Validate all input
+•	Use parameterized SQL/ORM queries
+•	Never expose database credentials
+•	Use environment variables
+•	Do not commit secrets
+•	Validate sort/filter parameters
+•	Do not expose stack traces
+•	Configure CORS appropriately
+•	Use secure configuration defaults
+Do not build unnecessary enterprise authentication unless explicitly required.
+________________________________________
+41. OPTIONAL AUTHENTICATION
+Authentication is NOT the primary requirement of the original assignment.
+If authentication is implemented, keep it simple.
+Do not let authentication complexity distract from the Order Management requirements.
+If implemented, document:
+•	Login
+•	Identity
+•	Permissions
+•	Protected operations
+However, prioritize:
+Orders
+Customers
+Dashboard
+Order Creation
+Order Management
+Scalability
+Reliability
+over authentication complexity.
+________________________________________
+42. IMPORTANT BUSINESS LOGIC
+Customer summary:
+Completed Orders =
+COUNT(orders WHERE status = 'completed')
+Completed Order Value:
+SUM(amount WHERE status = 'completed')
+Pending orders must NOT contribute.
+Cancelled orders must NOT contribute.
+Dashboard Total Completed Order Value must also only include:
+status = completed
+________________________________________
+43. TRANSACTIONS
+Order creation and any related database updates must use transactions where multiple writes are involved.
+For example, if optional inventory functionality is implemented:
+Create Order
+     ↓
+Update Inventory
+     ↓
+Commit Transaction
+If any required operation fails:
+Rollback
+Do not leave partially completed operations.
+________________________________________
+44. EMPTY STATES
+Every major screen should have a meaningful empty state.
+Orders:
+No orders found.
+Try changing your search or filters.
+Customers:
+No customers found.
+Customer orders:
+This customer has no orders yet.
+Products, if implemented:
+No products available.
+________________________________________
+45. LOADING STATES
+Do not leave blank screens while API calls are running.
+Provide:
+•	Skeletons
+•	Spinners
+•	Disabled buttons where appropriate
+Prevent duplicate order creation submissions.
+________________________________________
+46. ERROR STATES
+When an API fails:
+Unable to load orders.
+
+[ Retry ]
+When order creation fails:
+Unable to create order.
+
+Please correct the errors and try again.
+When status update fails:
+Unable to update order status.
+________________________________________
+47. FINAL APPLICATION FLOW
+The primary application flow should be:
+Dashboard
+    |
+    ├── View KPIs
+    |
+    └── Recent Orders
+
+
+Orders
+    |
+    ├── Search
+    ├── Filter
+    ├── Sort
+    ├── Pagination
+    ├── View Order
+    ├── Create Order
+    ├── Update Status
+    └── Cancel Order
+
+
+Customers
+    |
+    ├── Customer Summary
+    |
+    └── Customer Details
+            |
+            └── Customer Orders
+________________________________________
+48. DO NOT CONFUSE THE APPLICATION WITH AMAZON
+The system is an internal Order Management Dashboard.
+The Create Order page exists so that an operations user can create an order directly.
+It does NOT require:
+Product browsing
+→ Cart
+→ Checkout
+→ Payment
+The application should focus on:
+Operations
+    ↓
+Orders
+    ↓
+Customers
+    ↓
+Order Management
+    ↓
+Reporting
+________________________________________
+49. FINAL QUALITY REQUIREMENTS
+Before declaring the project complete, verify:
+[ ] Frontend runs
+[ ] Backend runs
+[ ] PostgreSQL runs
+[ ] Dashboard works
+[ ] Orders page works
+[ ] Customer summary works
+[ ] Customer details works
+
+[ ] Search works
+[ ] Filtering works
+[ ] Sorting works
+[ ] Pagination works
+
+[ ] Create Order works
+[ ] Order details works
+[ ] Status update works
+[ ] Cancellation works
+
+[ ] Validation works
+[ ] Loading states work
+[ ] Empty states work
+[ ] Error states work
+
+[ ] Database queries are efficient
+[ ] Indexes exist where justified
+[ ] Money uses DECIMAL
+[ ] No N+1 queries
+
+[ ] Tests pass
+[ ] README.md exists
+[ ] DECISIONS.md exists
+[ ] PROJECT_ARCHITECTURE.md exists
+[ ]Project_Overview.md exists
+[ ] .env.example exists
+
+[ ] No secrets committed
+[ ] No debug code remains
+[ ] Git history contains meaningful commits
+[ ] No fake commits
+________________________________________
+51. IMPLEMENTATION PRIORITY
+Implement in this order:
+PHASE 1
+Project setup
+    ↓
+PostgreSQL
+    ↓
+SQLAlchemy
+    ↓
+Customer + Order models
+
+
+PHASE 2
+Customer APIs
+    ↓
+Order APIs
+    ↓
+Dashboard APIs
+
+
+PHASE 3
+Seed data
+    ↓
+Backend tests
+
+
+PHASE 4
+React setup
+    ↓
+Application layout
+    ↓
+Dashboard
+    ↓
+Orders
+    ↓
+Customers
+
+
+PHASE 5
+Search
+    ↓
+Filtering
+    ↓
+Sorting
+    ↓
+Pagination
+
+
+PHASE 6
+Create Order
+    ↓
+Order Details
+    ↓
+Status Management
+    ↓
+Cancellation
+
+
+PHASE 7
+Error handling
+    ↓
+Performance improvements
+    ↓
+Frontend tests
+    ↓
+README
+    ↓
+DECISIONS
+    ↓
+Architecture documentation
+    ↓
+Interview guide
+
+
+PHASE 9
+Final testing
+    ↓
+Git review
+    ↓
+Final verification
+________________________________________
+52. MOST IMPORTANT ENGINEERING PRINCIPLE
+Do not optimize for the maximum number of features.
+Optimize for:
+CORRECTNESS
+     +
+SIMPLICITY
+     +
+MAINTAINABILITY
+     +
+PERFORMANCE
+     +
+SCALABILITY
+     +
+RELIABILITY
+     +
+EXPLAINABILITY
+
