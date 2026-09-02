@@ -56,3 +56,5 @@ alembic/versions/*
 .cache
 .pytest_cache
 .mypy_cache
+
+*.pdf
